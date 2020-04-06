@@ -19,8 +19,8 @@ SYNOPSIS
 DESCRIPTION
 
 git-md-html assumes an input as the Github markdown and converts it to
-HTML. Data can be read from a file, pipe or redirection and displays
-results to the standard output. You can redirect the output to another
+HTML. Data can be read from a file, pipe or redirection, and results
+default to the standard output. You can redirect the output to another
 file or another process (if needs). Internally the script uses pandoc
 as the many-to-many converter.
 
