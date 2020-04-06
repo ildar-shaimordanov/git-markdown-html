@@ -29,11 +29,11 @@ as the many-to-many converter.
 
 # SEE ALSO
 
-Pandoc home page:
-https://pandoc.org
+* Pandoc home page:
+  https://pandoc.org
 
-The idea to develop this script was inspired by the JFL's script:
-https://github.com/JFLarvoire/SysToolsLib/blob/master/Batch/md2h.bat
+* The idea to develop this script was inspired by the JFL's script:
+  https://github.com/JFLarvoire/SysToolsLib/blob/master/Batch/md2h.bat
 
-As well as his script this one uses Github Markdown Stylesheet:
-https://gist.github.com/tuzz/3331384
+* As well as his script this one uses Github Markdown Stylesheet:
+  https://gist.github.com/tuzz/3331384
