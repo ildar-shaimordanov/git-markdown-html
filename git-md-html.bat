@@ -47,7 +47,7 @@ set "CSSFILE=%TEMP%\%~n0.css"
 copy /y /b "%~f0" "%CSSFILE%" >nul
 
 pandoc --self-contained --standalone ^
-	--css="%CSSFILE%" --metadata pagetitle="%SRCNAME%" ^
+	--css="%CSSFILE%" --metadata "pagetitle=%SRCNAME%" ^
 	--from=gfm --to=html "%SRCFILE%"
 
 del /f /q "%CSSFILE%"
