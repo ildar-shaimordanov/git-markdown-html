@@ -30,6 +30,7 @@
 setlocal
 
 set "SRCFILE=%~f1"
+set "SRCPATH=%~dp1."
 set "SRCNAME=%~nx1 (%~f1)"
 
 if not defined SRCFILE (
@@ -39,6 +40,7 @@ if not defined SRCFILE (
 	)
 
 	set "SRCFILE=-"
+	set "SRCPATH=."
 	set "SRCNAME={STDOUT}"
 )
 
@@ -47,6 +49,7 @@ set "CSSFILE=%TEMP%\%~n0.css"
 copy /y /b "%~f0" "%CSSFILE%" >nul
 
 pandoc --self-contained --standalone ^
+	--resource-path="%SRCPATH%" ^
 	--css="%CSSFILE%" --metadata "pagetitle=%SRCNAME%" ^
 	--from=gfm --to=html "%SRCFILE%"
 

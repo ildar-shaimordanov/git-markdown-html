@@ -49,9 +49,11 @@ main() {
 	if [ $# -gt 0 ]
 	then
 		SRCFILE="$1"
+		SRCPATH="$( dirname "$1" )"
 		SRCNAME="${1##*/} ($( readlink -f "$1" ))"
 	else
 		SRCFILE="-"
+		SRCPATH="."
 		SRCNAME="{STDOUT}"
 	fi
 
@@ -67,6 +69,7 @@ main() {
 	esac
 
 	pandoc --self-contained --standalone \
+		--resource-path="$SRCPATH" \
 		--css="$CSSFILE" --metadata pagetitle="$SRCNAME" \
 		--from=gfm --to=html "$SRCFILE"
 }
