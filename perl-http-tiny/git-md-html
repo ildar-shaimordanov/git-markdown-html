@@ -7,7 +7,7 @@ git-md-html - convert GitHub markdown to HTML
 =head1 SYNOPSIS
 
   git-md-html --help
-  git-md-html [FILENAME]
+  git-md-html [OPTIONS] [FILENAME]
 
 =head1 DESCRIPTION
 
@@ -83,13 +83,13 @@ exit 1 unless GetOptions(
 		pod2usage({ -verbose => 2, -noperldoc => 1 });
 	},
 	"U|api-url=s" => \$gh_api_url,
+	"T|token=s" => \$gh_token,
 	"t|token-file=s" => sub {
 		local $/;
 		open F, "<", $_[1];
 		$gh_token = <F>;
 		close F;
 	},
-	"T|token=s" => \$gh_token,
 );
 
 pod2usage if -t 0 && @ARGV == 0;
