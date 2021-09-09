@@ -24,9 +24,19 @@ file or another process (if needs).
 
 Print this help and exit.
 
-=item B<A> I<URL>, B<--api-url>=I<URL>
+=item B<-U> I<URL>, B<--api-url>=I<URL>
 
 Use an alternative API URL. Defaults to C<https://api.github.com>.
+
+=item B<-t> I<TOKEN-FILE>, B<--token-file>=I<TOKEN-FILE>
+
+Specify a filename to read a token from.
+
+=item B<-T> I<TOKEN>, B<--token>=I<TOKEN>
+
+Specify the token.
+
+=back
 
 =head1 SEE ALSO
 
@@ -48,7 +58,7 @@ Ildar Shaimordanov E<lt>F<ildar.shaimordanov@gmail.com>E<gt>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2019, 2020 Ildar Shaimordanov. All rights reserved.
+Copyright (c) 2019-2021 Ildar Shaimordanov. All rights reserved.
 
   MIT License
 
@@ -66,11 +76,20 @@ use File::Spec;
 my $gh_api_url = "https://api.github.com";
 #my $gh_api_url = "https://github.hpe.com/api/v3";
 
+my $gh_token;
+
 exit 1 unless GetOptions(
-	"h|help"	=> sub {
+	"h|help" => sub {
 		pod2usage({ -verbose => 2, -noperldoc => 1 });
 	},
-	"A|api-url"	=> \$gh_api_url,
+	"U|api-url=s" => \$gh_api_url,
+	"t|token-file=s" => sub {
+		local $/;
+		open F, "<", $_[1];
+		$gh_token = <F>;
+		close F;
+	},
+	"T|token=s" => \$gh_token,
 );
 
 pod2usage if -t 0 && @ARGV == 0;
@@ -100,14 +119,21 @@ my $data = do {
 my $url = "$gh_api_url/markdown/raw";
 
 my $http = HTTP::Tiny->new();
-my $resp = $http->request('POST', $url, {
-	headers	=> {
-		'Content-Type'	=> 'text/plain',
+my $resp = $http->request("POST", $url, {
+	headers => {
+		"Content-Type" => "text/plain",
+		$gh_token ? ( "Authorization" => "token $gh_token" ) : (),
 	},
-	content	=> $data,
+	content => $data,
 });
 
 # =========================================================================
+
+$resp->{success} or die <<DIE;
+Unable to complete due to error:
+$resp->{status} $resp->{reason}
+$resp->{content}
+DIE
 
 print <<HTML;
 <!DOCTYPE html>
@@ -124,6 +150,8 @@ $resp->{content}
 HTML
 
 # =========================================================================
+
+# EOF
 
 # Style sheet from https://gist.github.com/tuzz/3331384
 __DATA__
