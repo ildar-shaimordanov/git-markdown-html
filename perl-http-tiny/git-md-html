@@ -144,8 +144,8 @@ print <<HTML;
 <style type="text/css">$css</style>
 </head>
 <body>
-</body>
 $resp->{content}
+</body>
 </html>
 HTML
 
