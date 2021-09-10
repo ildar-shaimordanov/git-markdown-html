@@ -4,6 +4,11 @@
 
 ME="$( basename "$0" )"
 
+GITHUB_API_URL="https://api.github.com"
+
+SRCFILE="-"
+PAGE_TITLE="{STDIN}"
+
 # =========================================================================
 
 print_usage() {
@@ -32,10 +37,10 @@ invoking pandoc, the cool many-to-many offline converter.
 
 OPTIONS
 
-  -u             Use the public GitHub by https://api.github.com
-  -U URL         Use another GitHub URL
-  -t token-file  Specify a filename to read a token from
-  -T token       Specify the token
+  -u             Use the public GitHub $GITHUB_API_URL
+  -U URL         Use another git API URL
+  -t TOKEN-FILE  Specify a filename to read a token from
+  -T TOKEN       Specify the token
 
 SEE ALSO
 
@@ -47,59 +52,38 @@ https://github.com/JFLarvoire/SysToolsLib/blob/master/Batch/md2h.bat
 
 As well as his script this one uses Github Markdown Stylesheet:
 https://gist.github.com/tuzz/3331384
+
+COPYRIGHT
+
+Copyright (c) 2019-2021 Ildar Shaimordanov. All rights reserved.
+
+  MIT License
 USAGE
 }
 
 # =========================================================================
 
 main() {
-	init
 	parse_options "$@"
 
 	if [ -n "$API_URL" ]
 	then
 		conv_online
-		return $?
-	fi
-
-	if which pandoc >/dev/null 2>&1
-	then
+	else
 		conv_offline
-		return $?
 	fi
-
-	echo "pandoc not found. Try with -u/-U to request GitHub" >&2
-	exit 255
 }
 
 # =========================================================================
 
-init() {
-	GITHUB_API_URL="https://api.github.com"
-
-	SRCFILE="-"
-	PAGETITLE="{STDIN}"
-
-	unset TEMP_FILES
-	trap 'finalize' EXIT
-}
-
-finalize() {
-	if [ ${#TEMP_FILES[@]} -gt 0 ]
-	then
-		rm -f "${TEMP_FILES[@]}"
-	fi
-}
-
 parse_options() {
-	if [ -t 0 -a $# -eq 0 ]
+	if [ -t 0 ] && [ $# -eq 0 ]
 	then
 		print_usage
 		exit
 	fi
 
 	OPTIND=1
-	local opt
 	while getopts ":uU:t:T:" opt
 	do
 		case "$opt" in
@@ -110,17 +94,14 @@ parse_options() {
 			API_URL="$OPTARG"
 			;;
 		t )
-			API_TOKEN="$( cat "$OPTARG" )" || {
-				echo "Token file not found: $OPTARG" >&2
-				exit 255
-			}
+			TOKEN="$( cat "$OPTARG" )" \
+			|| die "Token file not found: $OPTARG"
 			;;
 		T )
-			API_TOKEN="$OPTARG"
+			TOKEN="$OPTARG"
 			;;
 		\? )
-			echo "Bad option: $OPTARG" >&2
-			exit 255
+			die "Bad option: $OPTARG"
 			;;
 		esac
 	done
@@ -130,28 +111,76 @@ parse_options() {
 	if [ -n "$1" ]
 	then
 		SRCFILE="$1"
-		PAGETITLE="${1##*/} ($( readlink -f "$1" ))"
+		PAGE_TITLE="${1##*/} ($( readlink -f "$1" ))"
 	fi
 }
 
 # =========================================================================
 
 conv_online() {
+	URL="$API_URL/markdown/raw"
+
 	for n in curl wget
 	do
 		if which $n >/dev/null 2>&1
 		then
 			html_begin
 			html_css
+
 			dl_$n "$SRCFILE"
-			local RET=$?
+			RET=$?
+
 			html_end
+
 			return $RET
 		fi
 	done
 
-	echo "curl or wget not found" >&2
-	exit 255
+	die "curl or wget not found"
+}
+
+dl_curl() {
+	curl --insecure -s "$URL" \
+		--request POST --data-binary "@$1" \
+		--header "Content-Type: text/plain" \
+		${TOKEN:+--header "Authorization: token $TOKEN"}
+}
+
+dl_wget() {
+	if [ "$1" = "-" ]
+	then
+		set -- "${TMP:-/tmp}/$ME.$$"
+		trap "rm -f '$1'" EXIT
+		cat - > "$1"
+	fi
+
+	wget --no-check-certificate -qO - "$URL" \
+		--post-file="$1" \
+		--header "Content-Type: text/plain" \
+		${TOKEN:+--header "Authorization: token $TOKEN"}
+}
+
+# =========================================================================
+
+conv_offline() {
+	which pandoc >/dev/null 2>&1 \
+	|| die "pandoc not found. Try with -u/-U to request git API"
+
+	html_begin
+	html_css
+
+	case "$( uname | tr '[:upper:]' '[:lower:]' )" in
+	cygwin* | mingw* )
+		SRCFILE="$( cygpath -m "$SRCFILE" )"
+		;;
+	esac
+
+	pandoc --from=gfm --to=html "$SRCFILE"
+	RET=$?
+
+	html_end
+
+	return $RET
 }
 
 # =========================================================================
@@ -162,7 +191,7 @@ html_begin() {
 <html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
 <head>
 <meta charset="utf-8" />
-<title>$PAGETITLE</title>
+<title>$PAGE_TITLE</title>
 </head>
 <body>
 HTML
@@ -170,7 +199,7 @@ HTML
 
 html_css() {
 	echo '<style type="text/css">'
-	css
+	sed '1,/^__DATA__/d' "$0"
 	echo '</style>'
 }
 
@@ -183,51 +212,26 @@ HTML
 
 # =========================================================================
 
-dl_curl() {
-	curl -s "$API_URL/markdown/raw" \
-		--request POST --data-binary "@$1" \
-		--header 'Content-Type: text/plain' \
-		${API_TOKEN:+--header "Authorization: token $API_TOKEN"}
+die() {
+	warn "${1:-Died}"
+	exit 255
 }
 
-dl_wget() {
-	if [ "$1" = "-" ]
-	then
-		set -- "${TMP:-/tmp}/$ME.$$"
-		TEMP_FILES+=( "$1" )
-		cat - > "$1"
-	fi
-
-	wget -qO - "$API_URL/markdown/raw" \
-		--post-file="$1" \
-		--header 'Content-Type: text/plain' \
-		${API_TOKEN:+--header "Authorization: token $API_TOKEN"}
+warn() {
+	echo "${1:-Something wrong}" >&2
 }
 
 # =========================================================================
 
-conv_offline() {
-	CSSFILE="${TMP:-/tmp}/$ME.css"
-	TEMP_FILES+=( "$CSSFILE" )
-	css > "$CSSFILE"
-
-	case "$( uname | tr [:upper:] [:lower:] )" in
-	cygwin* | mingw* )
-		SRCFILE="$( cygpath -m "$SRCFILE" )"
-		CSSFILE="$( cygpath -m "$CSSFILE" )"
-		;;
-	esac
-
-	pandoc --self-contained --standalone \
-		--css="$CSSFILE" --metadata pagetitle="$PAGETITLE" \
-		--from=gfm --to=html "$SRCFILE"
-}
+main "$@"
+exit $?
 
 # =========================================================================
+
+# EOF
 
 # Style sheet from https://gist.github.com/tuzz/3331384
-css() {
-	cat - <<CSS
+__DATA__
 /*
 Copyright (c) 2017 Chris Patuzzo
 https://twitter.com/chrispatuzzo
@@ -637,13 +641,3 @@ pre code, pre tt {
   background-color: transparent;
   border: none;
 }
-CSS
-}
-
-# =========================================================================
-
-main "$@"
-
-# =========================================================================
-
-# EOF
