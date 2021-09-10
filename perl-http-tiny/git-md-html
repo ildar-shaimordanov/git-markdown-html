@@ -73,21 +73,21 @@ use Pod::Usage;
 use HTTP::Tiny;
 use File::Spec;
 
-my $gh_api_url = "https://api.github.com";
-#my $gh_api_url = "https://github.hpe.com/api/v3";
+my $api_url = "https://api.github.com";
+#my $api_url = "https://github.hpe.com/api/v3";
 
-my $gh_token;
+my $token;
 
 exit 1 unless GetOptions(
 	"h|help" => sub {
 		pod2usage({ -verbose => 2, -noperldoc => 1 });
 	},
-	"U|api-url=s" => \$gh_api_url,
-	"T|token=s" => \$gh_token,
+	"U|api-url=s" => \$api_url,
+	"T|token=s" => \$token,
 	"t|token-file=s" => sub {
 		local $/;
 		open F, "<", $_[1];
-		$gh_token = <F>;
+		$token = <F>;
 		close F;
 	},
 );
@@ -96,12 +96,12 @@ pod2usage if -t 0 && @ARGV == 0;
 
 # =========================================================================
 
-my $title = "{STDOUT}";
+my $page_title = "{STDIN}";
 
 if ( @ARGV ) {
 	my $pathname = File::Spec->rel2abs($ARGV[0]);
 	my ( undef, undef, $filename ) = File::Spec->splitpath($pathname);
-	$title = "$filename ($pathname)";
+	$page_title = "$filename ($pathname)";
 }
 
 my $css = do {
@@ -116,13 +116,13 @@ my $data = do {
 
 # =========================================================================
 
-my $url = "$gh_api_url/markdown/raw";
+my $url = "$api_url/markdown/raw";
 
 my $http = HTTP::Tiny->new();
 my $resp = $http->request("POST", $url, {
 	headers => {
 		"Content-Type" => "text/plain",
-		$gh_token ? ( "Authorization" => "token $gh_token" ) : (),
+		$token ? ( "Authorization" => "token $token" ) : (),
 	},
 	content => $data,
 });
@@ -140,7 +140,7 @@ print <<HTML;
 <html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
 <head>
 <meta charset="utf-8" />
-<title>$title</title>
+<title>$page_title</title>
 <style type="text/css">$css</style>
 </head>
 <body>
