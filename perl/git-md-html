@@ -2,19 +2,26 @@
 
 =head1 NAME
 
-git-md-html - convert GitHub markdown to HTML
+git-md-html - convert markdown to HTML
 
 =head1 SYNOPSIS
 
-  git-md-html --help
   git-md-html [OPTIONS] [FILENAME]
 
 =head1 DESCRIPTION
 
-git-md-html assumes an input as the Github markdown and converts it to
+git-md-html assumes an input as a markdown text and converts it to
 HTML. Data can be read from a file, pipe or redirection, and results
 default to the standard output. You can redirect the output to another
 file or another process (if needs).
+
+If one of the options -u/-U is specified, converting is performed
+with help of online Git API (defaults to GitHub API).
+
+In this case L<HTTP::Tiny> is used.
+
+If no more options specified, the script will tries to complete this
+action internally with L<Text::Markdown>.
 
 =head1 OPTIONS
 
@@ -24,9 +31,13 @@ file or another process (if needs).
 
 Print this help and exit.
 
+=item B<-u>, B<--github-api-url>
+
+Use the public GitHub API by C<https://api.github.com>.
+
 =item B<-U> I<URL>, B<--api-url>=I<URL>
 
-Use an alternative API URL. Defaults to C<https://api.github.com>.
+Use another git API URL.
 
 =item B<-t> I<TOKEN-FILE>, B<--token-file>=I<TOKEN-FILE>
 
@@ -40,6 +51,8 @@ Specify the token.
 
 =head1 SEE ALSO
 
+L<Text::Markdown>
+
 L<HTTP::Tiny>
 
 L<IO::Socket::SSL>
@@ -51,6 +64,9 @@ https://github.com/JFLarvoire/SysToolsLib/blob/master/Batch/md2h.bat
 
 As well as his script this one uses Github Markdown Stylesheet:
 https://gist.github.com/tuzz/3331384
+
+Yet another Perl converter:
+https://github.com/brxfork/md2html
 
 =head1 AUTHORS
 
@@ -70,17 +86,22 @@ use warnings;
 use Getopt::Long qw( :config no_ignore_case bundling );
 use Pod::Usage;
 
+use Text::Markdown;
 use HTTP::Tiny;
 use File::Spec;
 
-my $api_url = "https://api.github.com";
-#my $api_url = "https://github.hpe.com/api/v3";
+my $gh_api_url = "https://api.github.com";
+#my $gh_api_url = "https://github.hpe.com/api/v3";
 
+my $api_url;
 my $token;
 
 exit 1 unless GetOptions(
 	"h|help" => sub {
 		pod2usage({ -verbose => 2, -noperldoc => 1 });
+	},
+	"u|github-api-url" => sub {
+		$api_url = $gh_api_url;
 	},
 	"U|api-url=s" => \$api_url,
 	"T|token=s" => \$token,
@@ -116,24 +137,32 @@ my $data = do {
 
 # =========================================================================
 
-my $url = "$api_url/markdown/raw";
+my $html = '';
 
-my $http = HTTP::Tiny->new();
-my $resp = $http->request("POST", $url, {
-	headers => {
-		"Content-Type" => "text/plain",
-		$token ? ( "Authorization" => "token $token" ) : (),
-	},
-	content => $data,
-});
+unless ( defined $api_url ) {
+	$html = Text::Markdown->new->markdown($data);
+} else {
+	my $url = "$api_url/markdown/raw";
 
-# =========================================================================
+	my $http = HTTP::Tiny->new();
+	my $resp = $http->request("POST", $url, {
+		headers => {
+			"Content-Type" => "text/plain",
+			$token ? ( "Authorization" => "token $token" ) : (),
+		},
+		content => $data,
+	});
 
-$resp->{success} or die <<DIE;
+	$resp->{success} or die <<DIE;
 Unable to complete due to error:
 $resp->{status} $resp->{reason}
 $resp->{content}
 DIE
+
+	$html = $resp->{content};
+}
+
+# =========================================================================
 
 print <<HTML;
 <!DOCTYPE html>
@@ -141,10 +170,12 @@ print <<HTML;
 <head>
 <meta charset="utf-8" />
 <title>$page_title</title>
-<style type="text/css">$css</style>
 </head>
 <body>
-$resp->{content}
+<style type="text/css">
+$css
+</style>
+$html
 </body>
 </html>
 HTML

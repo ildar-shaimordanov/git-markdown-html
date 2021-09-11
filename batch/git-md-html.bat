@@ -1,58 +1,70 @@
-@echo:DOESNT WORK PROPERLY>&2
-@goto :EOF
-
 @echo off & rem { /*
 
-::NAME
-::
-::    git-md-html - convert GitHub markdown to HTML
-::
-::SYNOPSIS
-::
-::    git-md-html [OPTIONS] [FILENAME]
-::
-::DESCRIPTION
-::
-::git-md-html assumes an input as the GitHub markdown and converts it
-::to HTML. Data can be read from a file, pipe or redirection, outcome
-::defaults to the standard output. You can save it to a file or redirect
-::further to another process.
-::
-::If the options -u/-U are specified, either curl or wget (the first found)
-::will be used to communicate with the selected GitHub host to convert
-::markdown to HTML.
-::
-::If no more options specified, the script will try to complete this action
-::invoking pandoc, the cool many-to-many offline converter.
-::
-::OPTIONS
-::
-::  -u             Use the public GitHub by https://api.github.com
-::  -U URL         Use another GitHub URL
-::  -t token-file  Specify a filename to read a token from
-::  -T token       Specify the token
-::
-::SEE ALSO
-::
-::Pandoc home page
-::https://pandoc.org
-::
-::The idea to develop this script was inspired by the JFL's script:
-::https://github.com/JFLarvoire/SysToolsLib/blob/master/Batch/md2h.bat
-::
-::As well as his script this one uses Github Markdown Stylesheet:
-::https://gist.github.com/tuzz/3331384
+:::NAME
+:::
+:::    git-md-html - convert markdown to HTML
+:::
+:::SYNOPSIS
+:::
+:::    git-md-html [OPTIONS] [FILENAME]
+:::
+:::DESCRIPTION
+:::
+:::git-md-html assumes an input as a markdown text and converts it to
+:::HTML. Data can be read from a file, pipe or redirection, and results
+:::default to the standard output. You can redirect the output to another
+:::file or another process (if needs).
+:::
+:::If one of the options -u/-U is specified, converting is performed
+:::with help of online Git API (defaults to GitHub API).
+:::
+:::In this case curl or wget (the first found) is used to communicate
+:::with the selected Git host.
+:::
+:::If no more options specified, the script will tries to complete this
+:::action invoking pandoc, the cool many-to-many offline converter.
+:::
+:::OPTIONS
+:::
+:::  -u             Use the public GitHub API by https://api.github.com
+:::  -U URL         Use another GitHub URL
+:::  -t TOKEN-FILE  Specify a filename to read a token from
+:::  -T TOKEN       Specify the token
+:::
+:::SEE ALSO
+:::
+:::Pandoc home page
+:::https://pandoc.org
+:::
+:::The idea to develop this script was inspired by the JFL's script:
+:::https://github.com/JFLarvoire/SysToolsLib/blob/master/Batch/md2h.bat
+:::
+:::As well as his script this one uses Github Markdown Stylesheet:
+:::https://gist.github.com/tuzz/3331384
+:::
+:::Yet another Perl converter:
+:::https://github.com/brxfork/md2html
+:::
+:::COPYRIGHT
+:::
+:::Copyright (c) 2019-2021 Ildar Shaimordanov. All rights reserved.
+:::
+:::  MIT License
 
 setlocal
 
-:init
 set "GITHUB_API_URL=https://api.github.com"
 
 set "SRCFILE=-"
-set "PAGETITLE={STDIN}"
+set "PAGE_TITLE={STDIN}"
+
+set "API_URL="
+set "TOKEN="
+
+:: ========================================================================
 
 :parse_options
-if "%~1" == "" (
+timeout /t 0 >nul 2>&1 && if "%~1" == "" (
 	call :print_usage >&2
 	goto :EOF
 )
@@ -78,43 +90,101 @@ if "%~1" == "-t" (
 
 if not "%~1" == "" (
 	set "SRCFILE=%~1"
-	set "PAGETITLE=%~nx1 (%~f1)"
+	set "PAGE_TITLE=%~nx1 (%~f1)"
 )
 
-:main
+:: ========================================================================
+
 if defined API_URL (
 	call :conv_online
-	goto :EOF
-)
-
-for %%f in ( pandoc.exe ) do if not "%%~$PATH:f" == "" (
+) else (
 	call :conv_offline
-	goto :EOF
 )
 
-echo:pandoc not found. Try with -u/-U to request GitHub>&2
 goto :EOF
+
+:: ========================================================================
 
 :conv_online
+set "URL=%API_URL%/markdown/raw"
+
+set "AUTH_HEADER="
+if defined TOKEN set "AUTH_HEADER=--header "Authorization: token %TOKEN%""
+
+for %%f in ( curl.exe wget.exe ) do if not "%%~$PATH:f" == "" (
+	call :html_begin
+	call :html_css
+	call :dl_%%~nf "%SRCFILE%"
+	call :html_end
+	goto :EOF
+)
+
+call :die "curl or wget not found"
+goto :EOF
+
+
+:dl_curl
+curl --insecure -s "%URL%" ^
+	--request POST --data-binary "@%~1" ^
+	--header "Content-Type: text/plain" ^
+	%AUTH_HEADER%
+
+goto :EOF
+
+
+:dl_wget
+if "%~1" == "-" (
+	set "TEMPFILE=%TEMP%/%~n0.%RANDOM%"
+	more > "%TEMPFILE%"
+	call :dl_wget "%TEMPFILE%"
+	del /q "%TEMPFILE%"
+	goto :EOF
+)
+
+wget --no-check-certificate -qO - "%URL%" ^
+	--post-file="%~1" ^
+	--header "Content-Type: text/plain" ^
+	%AUTH_HEADER%
+
+goto :EOF
+
+:: ========================================================================
+
+:conv_offline
+for %%f in ( pandoc.exe ) do if "%%~$PATH:f" == "" (
+	die "pandoc not found. Try with -u/-U to request git API"
+	goto :EOF
+)
+
 call :html_begin
 call :html_css
-call :dl_curl "%SRCFILE%"
+
+pandoc --from=gfm --to=html "%SRCFILE%"
+
 call :html_end
+
 goto :EOF
+
+:: ========================================================================
 
 :html_begin
 echo:^<!DOCTYPE html^>
 echo:^<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang^>
 echo:^<head^>
 echo:^<meta charset="utf-8" /^>
-echo:^<title^>%PAGETITLE%^</title^>
+echo:^<title^>%PAGE_TITLE%^</title^>
 echo:^</head^>
 echo:^<body^>
 goto :EOF
 
 :html_css
 echo:^<style type="text/css"^>
-type "%~f0"
+set "CSS_FOUND="
+for /f "usebackq tokens=* delims=" %%s in ( "%~f0" ) do (
+	if defined CSS_FOUND echo:%%s
+	if "%%~s" == "rem */ }" set CSS_FOUND=1
+)
+
 echo:^</style^>
 goto :EOF
 
@@ -123,33 +193,21 @@ echo:^</body^>
 echo:^</html^>
 goto :EOF
 
-:dl_curl
-setlocal
+:: ========================================================================
 
-if defined API_TOKEN set "API_TOKEN=--header "Authorization: token %API_TOKEN%""
+:die
+call :warn "%~1"
+exit /b 255
 
-curl -s "%API_URL%/markdown/raw" ^
-	--request POST --data-binary "@%~1" ^
-	--header "Content-Type: text/plain" ^
-	%API_TOKEN%
-goto :EOF
-
-:conv_offline
-set "CSSFILE=%TEMP%\%~n0.css"
-
-copy /y /b "%~f0" "%CSSFILE%" >nul
-
-pandoc --self-contained --standalone ^
-	--css="%CSSFILE%" --metadata "pagetitle=%PAGETITLE%" ^
-	--from=gfm --to=html "%SRCFILE%"
-
-del /f /q "%CSSFILE%"
-
+:warn
+echo "%~1">&2
 goto :EOF
 
 :print_usage
-for /f "tokens=* delims=:" %%s in ( 'findstr "^::" "%~f0"' ) do echo:%%s
+for /f "tokens=* delims=:" %%s in ( 'findstr "^:::" "%~f0"' ) do echo:%%s
 goto :EOF
+
+:: ========================================================================
 
 rem Style sheet from https://gist.github.com/tuzz/3331384
 rem */ }

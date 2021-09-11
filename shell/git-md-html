@@ -15,7 +15,7 @@ print_usage() {
 	cat - <<USAGE
 NAME
 
-    git-md-html - convert GitHub markdown to HTML
+    git-md-html - convert markdown to HTML
 
 SYNOPSIS
 
@@ -23,21 +23,23 @@ SYNOPSIS
 
 DESCRIPTION
 
-git-md-html assumes an input as the GitHub markdown and converts it
-to HTML. Data can be read from a file, pipe or redirection, outcome
-defaults to the standard output. You can save it to a file or redirect
-further to another process.
+git-md-html assumes an input as a markdown text and converts it to
+HTML. Data can be read from a file, pipe or redirection, and results
+default to the standard output. You can redirect the output to another
+file or another process (if needs).
 
-If the options -u/-U are specified, either curl or wget (the first found)
-will be used to communicate with the selected GitHub host to convert
-markdown to HTML.
+If one of the options -u/-U is specified, converting is performed
+with help of online Git API (defaults to GitHub API).
 
-If no more options specified, the script will try to complete this action
-invoking pandoc, the cool many-to-many offline converter.
+In this case curl or wget (the first found) is used to communicate
+with the selected Git host.
+
+If no more options specified, the script will tries to complete this
+action invoking pandoc, the cool many-to-many offline converter.
 
 OPTIONS
 
-  -u             Use the public GitHub $GITHUB_API_URL
+  -u             Use the public GitHub API $GITHUB_API_URL
   -U URL         Use another git API URL
   -t TOKEN-FILE  Specify a filename to read a token from
   -T TOKEN       Specify the token
@@ -52,6 +54,9 @@ https://github.com/JFLarvoire/SysToolsLib/blob/master/Batch/md2h.bat
 
 As well as his script this one uses Github Markdown Stylesheet:
 https://gist.github.com/tuzz/3331384
+
+Yet another Perl converter:
+https://github.com/brxfork/md2html
 
 COPYRIGHT
 
