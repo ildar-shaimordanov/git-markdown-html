@@ -86,6 +86,9 @@ use warnings;
 use Getopt::Long qw( :config no_ignore_case bundling );
 use Pod::Usage;
 
+use FindBin;
+use lib "$FindBin::Bin/lib";
+
 use Text::Markdown;
 use HTTP::Tiny;
 use File::Spec;
