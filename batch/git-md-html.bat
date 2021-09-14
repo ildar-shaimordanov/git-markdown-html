@@ -1,5 +1,3 @@
-@echo off & rem { /*
-
 :::NAME
 :::
 :::    git-md-html - convert markdown to HTML
@@ -50,6 +48,8 @@
 :::Copyright (c) 2019-2021 Ildar Shaimordanov. All rights reserved.
 :::
 :::  MIT License
+
+@echo off
 
 setlocal
 
@@ -182,7 +182,7 @@ echo:^<style type="text/css"^>
 set "CSS_FOUND="
 for /f "usebackq tokens=* delims=" %%s in ( "%~f0" ) do (
 	if defined CSS_FOUND echo:%%s
-	if "%%~s" == "rem */ }" set CSS_FOUND=1
+	if "%%~s" == "__DATA__" set CSS_FOUND=1
 )
 
 echo:^</style^>
@@ -209,9 +209,10 @@ goto :EOF
 
 :: ========================================================================
 
-rem Style sheet from https://gist.github.com/tuzz/3331384
-rem */ }
+:: EOF
 
+:: Style sheet from https://gist.github.com/tuzz/3331384
+__DATA__
 /*
 Copyright (c) 2017 Chris Patuzzo
 https://twitter.com/chrispatuzzo
