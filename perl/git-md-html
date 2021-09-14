@@ -16,7 +16,7 @@ default to the standard output. You can redirect the output to another
 file or another process (if needs).
 
 If one of the options -u/-U is specified, converting is performed
-with help of online Git API (defaults to GitHub API).
+with help of GitHub API (defaults to the public GitHub API).
 
 In this case L<HTTP::Tiny> is used.
 
@@ -37,7 +37,7 @@ Use the public GitHub API by C<https://api.github.com>.
 
 =item B<-U> I<URL>, B<--api-url>=I<URL>
 
-Use another git API URL.
+Use another GitHub API URL.
 
 =item B<-t> I<TOKEN-FILE>, B<--token-file>=I<TOKEN-FILE>
 

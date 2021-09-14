@@ -29,18 +29,18 @@ default to the standard output. You can redirect the output to another
 file or another process (if needs).
 
 If one of the options -u/-U is specified, converting is performed
-with help of online Git API (defaults to GitHub API).
+with help of GitHub API (defaults to the public GitHub API).
 
 In this case curl or wget (the first found) is used to communicate
-with the selected Git host.
+with the selected GitHub host.
 
 If no more options specified, the script will tries to complete this
 action invoking pandoc, the cool many-to-many offline converter.
 
 OPTIONS
 
-  -u             Use the public GitHub API $GITHUB_API_URL
-  -U URL         Use another git API URL
+  -u             Use the public GitHub API by $GITHUB_API_URL
+  -U URL         Use another GitHub API URL
   -t TOKEN-FILE  Specify a filename to read a token from
   -T TOKEN       Specify the token
 

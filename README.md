@@ -22,7 +22,7 @@ There is set of scripts making attempt to convert a markdown text to HTML. Data 
 
 Despite of difference in implementation they have identical (or almost identical, at least I tried to follow this direction) user interface.
 
-With the `-u` / `-U` options each script sends request to git API (by default to GitHub API). Shell and batch scripts use `curl` or `wget` (the first one found). The Perl script uses `HTTP::Tiny`.
+With the `-u` / `-U` options each script sends request to GitHub API (by default to teh public GitHub API). Shell and batch scripts use `curl` or `wget` (the first one found). The Perl script uses `HTTP::Tiny`.
 
 if no more options specified, the scripts try to complete convertion invoking `pandoc` (shell and batch) or `Text::Markdown` (Perl).
 
@@ -33,7 +33,7 @@ if no more options specified, the scripts try to complete convertion invoking `p
 * `-u`, `--github-api-url`
   Use the public GitHub API by https://api.github.com.
 * `-U URL`, `--api-url=URL`
-  Use another git API URL.
+  Use another GitHub API URL.
 * `-t TOKEN-FILE`, `--token-file=TOKEN-FILE`
   Specify a filename to read a token from.
 * `-T TOKEN`, `--token=TOKEN`

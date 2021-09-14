@@ -16,7 +16,7 @@
 :::file or another process (if needs).
 :::
 :::If one of the options -u/-U is specified, converting is performed
-:::with help of online Git API (defaults to GitHub API).
+:::with help of GitHub API (defaults to the public GitHub API).
 :::
 :::In this case curl or wget (the first found) is used to communicate
 :::with the selected Git host.
@@ -27,7 +27,7 @@
 :::OPTIONS
 :::
 :::  -u             Use the public GitHub API by https://api.github.com
-:::  -U URL         Use another GitHub URL
+:::  -U URL         Use another GitHub API URL
 :::  -t TOKEN-FILE  Specify a filename to read a token from
 :::  -T TOKEN       Specify the token
 :::
