@@ -49,8 +49,10 @@ if no more options specified, the scripts try to complete convertion invoking `p
   https://github.com/JFLarvoire/SysToolsLib/blob/master/Batch/md2h.bat
 * As well as his script this one uses Github Markdown Stylesheet:
   https://gist.github.com/tuzz/3331384
-* Yet another Perl converter:
+* Yet another Perl-written GitHub API based converter (one of many):
   https://github.com/brxfork/md2html
+* Another GitLab API based converter (one of many):
+  https://gitlab.triumf.ca/-/snippets/53
 
 # COPYRIGHT
 
