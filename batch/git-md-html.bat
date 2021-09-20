@@ -182,12 +182,11 @@ goto :EOF
 
 :html_css
 echo:^<style type="text/css"^>
-set "CSS_FOUND="
+set "DATA_FOUND="
 for /f "usebackq tokens=* delims=" %%s in ( "%~f0" ) do (
-	if defined CSS_FOUND echo:%%s
-	if "%%~s" == "__DATA__" set CSS_FOUND=1
+	if defined DATA_FOUND echo:%%s
+	if "%%~s" == "__DATA__" set DATA_FOUND=1
 )
-
 echo:^</style^>
 goto :EOF
 
