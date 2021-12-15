@@ -28,6 +28,7 @@
 :::  -U URL         Use another GitHub API URL
 :::  -t TOKEN-FILE  Specify a filename to read a token from
 :::  -T TOKEN       Specify the token
+:::  -r             Raw output (no head, no CSS; html body only)
 :::
 :::SEE ALSO
 :::
@@ -91,6 +92,11 @@ if "%~1" == "-t" (
 	shift /1
 )
 
+if "%~1" == "-r" (
+	set "HTML_RAW=1"
+	shift /1
+)
+
 if not "%~1" == "" (
 	set "SRCFILE=%~1"
 	set "PAGE_TITLE=%~nx1 (%~f1)"
@@ -115,10 +121,14 @@ set "AUTH_HEADER="
 if defined TOKEN set "AUTH_HEADER=--header "Authorization: token %TOKEN%""
 
 for %%f in ( curl.exe wget.exe ) do if not "%%~$PATH:f" == "" (
-	call :html_begin
-	call :html_css
+	if not defined HTML_RAW (
+		call :html_begin
+		call :html_css
+	)
 	call :dl_%%~nf "%SRCFILE%"
-	call :html_end
+	if not defined HTML_RAW (
+		call :html_end
+	)
 	goto :EOF
 )
 
@@ -159,12 +169,16 @@ for %%f in ( pandoc.exe ) do if "%%~$PATH:f" == "" (
 	goto :EOF
 )
 
-call :html_begin
-call :html_css
+if not defined HTML_RAW (
+	call :html_begin
+	call :html_css
+)
 
 pandoc --from=gfm --to=html "%SRCFILE%"
 
-call :html_end
+if not defined HTML_RAW (
+	call :html_end
+)
 
 goto :EOF
 

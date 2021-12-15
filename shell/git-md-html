@@ -43,6 +43,7 @@ OPTIONS
   -U URL         Use another GitHub API URL
   -t TOKEN-FILE  Specify a filename to read a token from
   -T TOKEN       Specify the token
+  -r             Raw output (no head, no CSS; html body only)
 
 SEE ALSO
 
@@ -92,7 +93,7 @@ parse_options() {
 	fi
 
 	OPTIND=1
-	while getopts ":uU:t:T:" opt
+	while getopts ":uU:t:T:r" opt
 	do
 		case "$opt" in
 		u )
@@ -107,6 +108,9 @@ parse_options() {
 			;;
 		T )
 			TOKEN="$OPTARG"
+			;;
+		r )
+			HTML_RAW=1
 			;;
 		\? )
 			die "Bad option: $OPTARG"
@@ -128,23 +132,26 @@ parse_options() {
 conv_online() {
 	URL="$API_URL/markdown/raw"
 
-	for n in curl wget
-	do
-		if which $n >/dev/null 2>&1
-		then
-			html_begin
-			html_css
+	DL="$( lookup_command curl wget )"
 
-			dl_$n "$SRCFILE"
-			RET=$?
+	[ -n "$DL" ] \
+	|| die "curl or wget not found"
 
-			html_end
+	if [ -z "$HTML_RAW" ]
+	then
+		html_begin
+		html_css
+	fi
 
-			return $RET
-		fi
-	done
+	dl_$DL "$SRCFILE"
+	RET=$?
 
-	die "curl or wget not found"
+	if [ -z "$HTML_RAW" ]
+	then
+		html_end
+	fi
+
+	return $RET
 }
 
 dl_curl() {
@@ -171,11 +178,14 @@ dl_wget() {
 # =========================================================================
 
 conv_offline() {
-	which pandoc >/dev/null 2>&1 \
+	[ -n "$( lookup_command pandoc )" ] \
 	|| die "pandoc not found. Try with -u/-U to request git API"
 
-	html_begin
-	html_css
+	if [ -z "$HTML_RAW" ]
+	then
+		html_begin
+		html_css
+	fi
 
 	case "$( uname | tr '[:upper:]' '[:lower:]' )" in
 	cygwin* | mingw* )
@@ -186,7 +196,10 @@ conv_offline() {
 	pandoc --from=gfm --to=html "$SRCFILE"
 	RET=$?
 
-	html_end
+	if [ -z "$HTML_RAW" ]
+	then
+		html_end
+	fi
 
 	return $RET
 }
@@ -219,6 +232,10 @@ HTML
 }
 
 # =========================================================================
+
+lookup_command() {
+	command -v "$@" | sed -n '1 s/.*\///p'
+}
 
 die() {
 	warn "${1:-Died}"

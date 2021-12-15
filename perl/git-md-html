@@ -47,6 +47,10 @@ Specify a filename to read a token from.
 
 Specify the token.
 
+=item B<-r>
+
+Raw output (no head, no CSS; html body only).
+
 =back
 
 =head1 SEE ALSO
@@ -97,6 +101,7 @@ my $gh_api_url = "https://api.github.com";
 
 my $api_url;
 my $token;
+my $html_raw;
 
 exit 1 unless GetOptions(
 	"h|help" => sub {
@@ -113,6 +118,7 @@ exit 1 unless GetOptions(
 		$token = <F>;
 		close F;
 	},
+	"r" => \$html_raw,
 );
 
 pod2usage if -t 0 && @ARGV == 0;
@@ -165,6 +171,11 @@ DIE
 }
 
 # =========================================================================
+
+if ( $html_raw ) {
+	print $html;
+	exit;
+}
 
 print <<HTML;
 <!DOCTYPE html>
