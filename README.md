@@ -38,6 +38,8 @@ if no more options specified, the scripts try to complete convertion invoking `p
   Specify a filename to read a token from.
 * `-T TOKEN`, `--token=TOKEN`
   Specify the token.
+* `-r`
+  Raw output (no head, no CSS; html body only).
 
 # SEE ALSO
 
