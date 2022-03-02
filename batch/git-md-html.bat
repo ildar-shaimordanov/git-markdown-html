@@ -71,7 +71,6 @@ timeout /t 0 >nul 2>&1 && if "%~1" == "" (
 	call :print_usage >&2
 	goto :EOF
 )
-echo on
 
 :parse_options
 
