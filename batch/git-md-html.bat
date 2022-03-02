@@ -49,7 +49,7 @@
 :::
 :::COPYRIGHT
 :::
-:::Copyright (c) 2019-2021 Ildar Shaimordanov. All rights reserved.
+:::Copyright (c) 2019-2022 Ildar Shaimordanov. All rights reserved.
 :::
 :::  MIT License
 
@@ -63,39 +63,56 @@ set "SRCFILE=-"
 set "PAGE_TITLE={STDIN}"
 
 set "API_URL="
-set "TOKEN="
+set "API_TOKEN="
 
 :: ========================================================================
 
-:parse_options
 timeout /t 0 >nul 2>&1 && if "%~1" == "" (
 	call :print_usage >&2
 	goto :EOF
 )
+echo on
+
+:parse_options
 
 if "%~1" == "-u" (
 	set "API_URL=%GITHUB_API_URL%"
 	shift /1
-) else if "%~1" == "-U" (
+	goto :parse_options
+)
+
+if "%~1" == "-U" (
 	set "API_URL=%~2"
 	shift /1
 	shift /1
+	goto :parse_options
 )
 
 if "%~1" == "-t" (
-	for %%f in ( "%~2" ) do set "API_TOKEN=%%f"
+	if not exist "%~2" (
+		call :die "Token file not found: %~2"
+		goto :EOF
+	)
+	for /f "usebackq tokens=*" %%f in ( "%~2" ) do set "API_TOKEN=%%f"
 	shift /1
 	shift /1
-) else if "%~1" == "-T" (
+	goto :parse_options
+)
+
+if "%~1" == "-T" (
 	set "API_TOKEN=%~2"
 	shift /1
 	shift /1
+	goto :parse_options
 )
 
 if "%~1" == "-r" (
 	set "HTML_RAW=1"
 	shift /1
+	goto :parse_options
 )
+
+if "%~1" == "--" shift /1
 
 if not "%~1" == "" (
 	set "SRCFILE=%~1"
@@ -118,7 +135,7 @@ goto :EOF
 set "URL=%API_URL%/markdown/raw"
 
 set "AUTH_HEADER="
-if defined TOKEN set "AUTH_HEADER=--header "Authorization: token %TOKEN%""
+if defined API_TOKEN set "AUTH_HEADER=--header "Authorization: token %API_TOKEN%""
 
 for %%f in ( curl.exe wget.exe ) do if not "%%~$PATH:f" == "" (
 	if not defined HTML_RAW (
@@ -216,7 +233,7 @@ call :warn "%~1"
 exit /b 255
 
 :warn
-echo "%~1">&2
+echo:%~1>&2
 goto :EOF
 
 :print_usage

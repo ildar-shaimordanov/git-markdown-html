@@ -103,11 +103,12 @@ parse_options() {
 			API_URL="$OPTARG"
 			;;
 		t )
-			TOKEN="$( cat "$OPTARG" )" \
+			[ -f "$OPTARG" ] \
 			|| die "Token file not found: $OPTARG"
+			API_TOKEN="$( cat "$OPTARG" )"
 			;;
 		T )
-			TOKEN="$OPTARG"
+			API_TOKEN="$OPTARG"
 			;;
 		r )
 			HTML_RAW=1
@@ -158,7 +159,7 @@ dl_curl() {
 	curl --insecure -s "$URL" \
 		--request POST --data-binary "@$1" \
 		--header "Content-Type: text/plain" \
-		${TOKEN:+--header "Authorization: token $TOKEN"}
+		${API_TOKEN:+--header "Authorization: token $API_TOKEN"}
 }
 
 dl_wget() {
@@ -233,8 +234,17 @@ HTML
 
 # =========================================================================
 
+# POSIX compliant
+# https://pubs.opengroup.org/onlinepubs/9699919799/idx/utilities.html
+#
+# BusyBox compatible (remove possible trailing .exe)
 lookup_command() {
-	which -a "$@" 2>/dev/null | sed -n '1 { s/.*\///; s/\.exe$//; p }'
+#	which -a "$@" 2>/dev/null | sed -n '1 { s/.*\///; s/\.exe$//; p }'
+	while [ $# -gt 0 ] && ! command -v "$1"
+	do
+		shift 1
+	done \
+	| sed 's/.*\///; s/\.exe$//'
 }
 
 die() {
