@@ -239,12 +239,7 @@ HTML
 #
 # BusyBox compatible (remove possible trailing .exe)
 lookup_command() {
-#	which -a "$@" 2>/dev/null | sed -n '1 { s/.*\///; s/\.exe$//; p }'
-	while [ $# -gt 0 ] && ! command -v "$1"
-	do
-		shift 1
-	done \
-	| sed 's/.*\///; s/\.exe$//'
+	which -a "$@" 2>/dev/null | sed 's/.*\///; s/\.exe$//; q'
 }
 
 die() {
