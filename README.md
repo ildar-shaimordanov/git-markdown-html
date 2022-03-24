@@ -38,8 +38,10 @@ if no more options specified, the scripts try to complete convertion invoking `p
   Specify a filename to read a token from.
 * `-T TOKEN`, `--token=TOKEN`
   Specify the token.
-* `-r`
+* `-r`, `--raw`
   Raw output (no head, no CSS; html body only).
+
+The short options are supported by the all implementations, the long options are supported by the Perl version of the script.
 
 # SEE ALSO
 

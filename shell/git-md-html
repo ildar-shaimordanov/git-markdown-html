@@ -144,7 +144,7 @@ conv_online() {
 		html_css
 	fi
 
-	dl_$DL "$SRCFILE"
+	dl "$SRCFILE"
 	RET=$?
 
 	if [ -z "$HTML_RAW" ]
@@ -153,6 +153,10 @@ conv_online() {
 	fi
 
 	return $RET
+}
+
+dl() {
+	dl_$DL "$@"
 }
 
 dl_curl() {

@@ -47,7 +47,7 @@ Specify a filename to read a token from.
 
 Specify the token.
 
-=item B<-r>
+=item B<-r>, B<--raw>
 
 Raw output (no head, no CSS; html body only).
 
@@ -120,7 +120,7 @@ exit 1 unless GetOptions(
 		$api_token =~ s/\s*$//;
 		close F;
 	},
-	"r" => \$html_raw,
+	"r|raw" => \$html_raw,
 );
 
 pod2usage if -t 0 && @ARGV == 0;
