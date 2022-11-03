@@ -240,10 +240,14 @@ HTML
 
 # POSIX compliant
 # https://pubs.opengroup.org/onlinepubs/9699919799/idx/utilities.html
-#
-# BusyBox compatible (remove possible trailing .exe)
 lookup_command() {
-	which -a "$@" 2>/dev/null | sed 's/.*\///; s/\.exe$//; q'
+	for n in "$@"
+	do
+		command -v "$n" >/dev/null && {
+			echo "$n"
+			return
+		}
+	done
 }
 
 die() {
