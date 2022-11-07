@@ -181,7 +181,7 @@ goto :EOF
 
 :conv_offline
 for %%f in ( pandoc.exe ) do if "%%~$PATH:f" == "" (
-	die "pandoc not found. Try with -u/-U to request git API"
+	call :die "pandoc not found. Try with -u/-U to request git API"
 	goto :EOF
 )
 
